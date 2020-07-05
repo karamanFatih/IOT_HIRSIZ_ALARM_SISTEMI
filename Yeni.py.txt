@@ -1,0 +1,37 @@
+import time
+import RPi.GPIO as io
+io.setmode(io.BCM)
+import paho.mqtt.client as mqtt # Import the MQTT library
+from gpiozero import Buzzer
+
+pir_pin = 18
+buzzer=Buzzer(17)
+buzzer.off()
+
+io.setup(pir_pin, io.IN) # activate input
+
+def messageFunction (client, userdata, message):
+ topic = str(message.topic)
+ message = str(message.payload.decode("utf-8"))
+ print(topic + message)	
+
+ourClient = mqtt.Client("makerio_mqtt") # Create a MQTT client object
+
+ourClient.connect("test.mosquitto.org", 1883) # Connect to the test MQTT broker
+
+ourClient.subscribe("osoyoo/#") # Subscribe to the topic AC_unit
+
+ourClient.on_message = messageFunction # Attach the messageFunction to subscription
+
+ourClient.loop_start() # Start the MQTT client
+
+ 
+
+while True:
+	if io.input(pir_pin):
+ 	 print("Evde Hareket Algilandi.")
+	 buzzer.on()
+	 ourClient.publish("osoyoo/", "		Dikkat! Eve hirsiz girdi!!!") # Publish message to MQTT broker	
+
+	time.sleep(4)
+ 	buzzer.off()
